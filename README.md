@@ -41,6 +41,10 @@ UPSTASH_REDIS_REST_TOKEN=
 RATE_LIMIT_ENABLED=
 ```
 
+## Deployment
+
+Deployed on [Vercel](https://dota2-watchbuddy-j7vv.vercel.app/), tracking the `main` branch.
+
 ## Scripts
 
 - `npm run dev` — start the dev server
