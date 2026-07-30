@@ -16,7 +16,7 @@ export default function TypingIndicator({ status }: TypingIndicatorProps) {
               <span className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
               <span className="size-1.5 animate-bounce rounded-full bg-current" />
             </span>
-            {status && <span className="text-xs text-muted-foreground">{status}</span>}
+            {status && <span className="text-sm">{status}</span>}
           </BubbleContent>
         </Bubble>
       </MessageContent>
