@@ -5,7 +5,8 @@ import { SYSTEM_PROMPT } from "@/lib/systemPrompt";
 import { executeLookupTool, lookupTool } from "@/lib/tools/lookupTool";
 import { executeHeroKitTool, heroKitTool } from "@/lib/tools/heroKitTool";
 import { checkRateLimit } from "@/lib/rateLimit";
-import type { MessageSource } from "@/lib/types";
+import { resolveBlockPlaceholders } from "@/lib/contentBlocks";
+import type { ContentBlock, MessageSource } from "@/lib/types";
 
 const ALLOWED_WEB_SEARCH_DOMAINS: string[] = [
   "dota2.com",
@@ -109,6 +110,8 @@ export async function POST(req: NextRequest) {
 
         let usedOpenDota = false;
         const allContent: Anthropic.ContentBlock[] = [];
+        const blocksByPlaceholderId = new Map<string, ContentBlock>();
+        let blockCounter = 0;
         let response = await createMessage();
         let iterations = 0;
 
@@ -121,17 +124,28 @@ export async function POST(req: NextRequest) {
           for (const block of response.content) {
             if (block.type !== "tool_use") continue;
             send({ type: "status", text: toolStatusText(block) });
-            let result: string;
+            let text: string;
+            let contentBlock: ContentBlock | undefined;
             if (block.name === "lookup_dota_entity") {
               usedOpenDota = true;
-              result = await executeLookupTool(block.input as { entity_type: string; name: string });
+              const result = await executeLookupTool(block.input as { entity_type: string; name: string });
+              text = result.text;
+              contentBlock = result.block;
             } else if (block.name === "lookup_hero_kit") {
               usedOpenDota = true;
-              result = await executeHeroKitTool(block.input as { kit_type: string; hero_name: string });
+              const result = await executeHeroKitTool(block.input as { kit_type: string; hero_name: string });
+              text = result.text;
+              contentBlock = result.block;
             } else {
-              result = `Unknown tool "${block.name}".`;
+              text = `Unknown tool "${block.name}".`;
             }
-            toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
+            if (contentBlock) {
+              blockCounter++;
+              const placeholderId = String(blockCounter);
+              blocksByPlaceholderId.set(placeholderId, contentBlock);
+              text += `\n\n[To show this data to the user, copy this exact token into your reply at the point it should appear: [[block:${placeholderId}]] — copy it verbatim, do not modify it.]`;
+            }
+            toolResults.push({ type: "tool_result", tool_use_id: block.id, content: text });
           }
 
           if (toolResults.length > 0) {
@@ -141,10 +155,12 @@ export async function POST(req: NextRequest) {
         }
         allContent.push(...response.content);
 
-        const reply = response.content
+        const replyText = response.content
           .filter((block) => block.type === "text")
           .map((block) => block.text)
           .join("\n");
+
+        const content = resolveBlockPlaceholders(replyText, blocksByPlaceholderId);
 
         const sources: MessageSource[] = [];
         if (usedOpenDota) {
@@ -179,7 +195,7 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        send({ type: "done", reply, sources });
+        send({ type: "done", content, sources });
       } catch (err) {
         send({ type: "error", message: err instanceof Error ? err.message : "Unknown error" });
       } finally {

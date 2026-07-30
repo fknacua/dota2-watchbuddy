@@ -1,9 +1,12 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ChevronDown, Link2 } from "lucide-react";
-import type { Message as ChatMessageData } from "@/lib/types";
+import type { ContentBlock, Message as ChatMessageData } from "@/lib/types";
 import { Message as MessageRow, MessageContent } from "@/components/ui/message";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
+import StatsTable from "@/components/blocks/StatsTable";
+import ColumnTable from "@/components/blocks/ColumnTable";
+import AbilityList from "@/components/blocks/AbilityList";
 
 type SourceGroup =
   | { type: "internal" }
@@ -74,6 +77,40 @@ function SourcePills({ sources }: { sources: NonNullable<ChatMessageData["source
   );
 }
 
+function renderBlock(block: ContentBlock, key: number) {
+  switch (block.type) {
+    case "text":
+      return (
+        <div key={key} className="prose-chat">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.text}</ReactMarkdown>
+        </div>
+      );
+    case "statsTable":
+      return (
+        <div key={key} className="prose-chat">
+          <StatsTable
+            title={block.title}
+            iconUrl={block.iconUrl}
+            description={block.description}
+            rows={block.rows}
+          />
+        </div>
+      );
+    case "columnTable":
+      return (
+        <div key={key} className="prose-chat">
+          <ColumnTable title={block.title} columns={block.columns} rows={block.rows} />
+        </div>
+      );
+    case "abilityList":
+      return (
+        <div key={key} className="prose-chat">
+          <AbilityList title={block.title} entries={block.entries} />
+        </div>
+      );
+  }
+}
+
 export default function ChatMessage({ message }: { message: ChatMessageData }) {
   const isUser = message.role === "user";
 
@@ -84,13 +121,9 @@ export default function ChatMessage({ message }: { message: ChatMessageData }) {
           <BubbleContent
             className={isUser ? "!bg-accent !text-accent-foreground whitespace-pre-wrap" : undefined}
           >
-            {isUser ? (
-              message.content
-            ) : (
-              <div className="prose-chat">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-              </div>
-            )}
+            {isUser
+              ? message.content.map((block) => (block.type === "text" ? block.text : "")).join("")
+              : message.content.map((block, i) => renderBlock(block, i))}
           </BubbleContent>
         </Bubble>
         {!isUser && message.sources && message.sources.length > 0 && (

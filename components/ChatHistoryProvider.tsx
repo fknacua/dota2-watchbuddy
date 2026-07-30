@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as chatStore from "@/lib/chatStore";
 import { ChatHistoryContext } from "@/lib/useChatHistory";
-import type { ChatSummary, Message, MessageSource } from "@/lib/types";
+import { blocksToPlainText } from "@/lib/types";
+import type { ChatSummary, ContentBlock, Message, MessageSource } from "@/lib/types";
 
 interface StatusEvent {
   type: "status";
@@ -11,7 +12,7 @@ interface StatusEvent {
 }
 interface DoneEvent {
   type: "done";
-  reply: string;
+  content: ContentBlock[];
   sources: MessageSource[];
 }
 interface ErrorEvent {
@@ -111,7 +112,7 @@ export default function ChatHistoryProvider({ children }: { children: React.Reac
       const userMessage: Message = {
         id: crypto.randomUUID(),
         role: "user",
-        content: text,
+        content: [{ type: "text", text }],
       };
       const nextMessages = [...priorMessages, userMessage];
       addMessages(chatId, [userMessage]);
@@ -125,7 +126,7 @@ export default function ChatHistoryProvider({ children }: { children: React.Reac
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
+            messages: nextMessages.map((m) => ({ role: m.role, content: blocksToPlainText(m.content) })),
           }),
           signal: controller.signal,
         });
@@ -170,13 +171,13 @@ export default function ChatHistoryProvider({ children }: { children: React.Reac
         const assistantMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: doneEvent.reply,
+          content: doneEvent.content,
           sources: doneEvent.sources,
         };
         addMessages(chatId, [assistantMessage]);
 
         if (nextMessages.length === 1) {
-          generateTitle(chatId, text, assistantMessage.content);
+          generateTitle(chatId, text, blocksToPlainText(assistantMessage.content));
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -184,7 +185,7 @@ export default function ChatHistoryProvider({ children }: { children: React.Reac
         const errorMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
-          content: "Something went wrong reaching the model — try again.",
+          content: [{ type: "text", text: "Something went wrong reaching the model — try again." }],
         };
         addMessages(chatId, [errorMessage]);
       } finally {

@@ -102,9 +102,10 @@ This doc is the implementation plan, not a running log — each step below state
 - `lib/tools/lookupTool.ts` — tool definition + executor calling into `lib/opendota.ts`, returning matched record(s) or an explicit "no match found" string
 - Update `app/api/chat/route.ts` — implement the manual tool-use loop (execute tool_use blocks, append tool_result, loop, cap iterations)
 
-### Step 3.3 — System prompt + markdown tables ✅
-- Update `lib/systemPrompt.ts` — never answer hero/ability/item questions from memory, always call the lookup tool first; format multi-stat answers as markdown tables; always lead with the entity's exact display name
-- Add `react-markdown` + `remark-gfm` for table rendering in `ChatMessage.tsx`
+### Step 3.3 — System prompt + tool-grounded data rendering ✅
+- Update `lib/systemPrompt.ts` — never answer hero/ability/item questions from memory, always call the lookup tool first; always lead with the entity's exact display name
+- Add `react-markdown` + `remark-gfm` for general prose rendering in `ChatMessage.tsx` (headings, lists, links, web-search-grounded content)
+- **Superseded 2026-07-31**: multi-stat answers originally rendered as Claude-authored markdown tables; replaced with backend-formatted `ContentBlock`s (`lib/tools/blockFormatters.ts`) that Claude references via `[[block:N]]` placeholders rather than writing itself — recurring malformed-table bugs made the markdown-authoring approach structurally unreliable for multi-sentence ability text. See `docs/ux-improvements-plan.md` Step 9 and `docs/progress-log.md`'s 2026-07-31 entry for the full history.
 
 ### Step 3.4 — Supplementary data-source capability ✅
 Give the model a way to answer questions the live OpenDota API can't cover at all (e.g. Aghanim's Scepter/Shard text isn't present in `constants/abilities`), by pulling in additional structured resources — mirroring what OpenDota's own web frontend does rather than relying on the live API alone. Framed as a general capability (any API gap → supplementary source), not a one-off facets/Aghs/Shard feature.

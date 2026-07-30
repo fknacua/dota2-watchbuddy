@@ -1,5 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { findAbilityByName, findHeroByName, findItemByName } from "@/lib/opendota";
+import { abilityToBlock, heroToStatsBlock, itemToStatsBlock } from "@/lib/tools/blockFormatters";
+import type { ToolExecutionResult } from "@/lib/types";
 
 export const lookupTool: Anthropic.Tool = {
   name: "lookup_dota_entity",
@@ -28,27 +30,30 @@ interface LookupToolInput {
   name: string;
 }
 
-export async function executeLookupTool(input: LookupToolInput): Promise<string> {
+export async function executeLookupTool(input: LookupToolInput): Promise<ToolExecutionResult> {
   const { entity_type, name } = input;
 
   try {
     switch (entity_type) {
       case "hero": {
         const hero = await findHeroByName(name);
-        return hero ? JSON.stringify(hero) : `No hero found matching "${name}".`;
+        if (!hero) return { text: `No hero found matching "${name}".` };
+        return { text: JSON.stringify(hero), block: heroToStatsBlock(hero) };
       }
       case "ability": {
         const ability = await findAbilityByName(name);
-        return ability ? JSON.stringify(ability) : `No ability found matching "${name}".`;
+        if (!ability) return { text: `No ability found matching "${name}".` };
+        return { text: JSON.stringify(ability), block: abilityToBlock(ability) };
       }
       case "item": {
         const item = await findItemByName(name);
-        return item ? JSON.stringify(item) : `No item found matching "${name}".`;
+        if (!item) return { text: `No item found matching "${name}".` };
+        return { text: JSON.stringify(item), block: itemToStatsBlock(item) };
       }
       default:
-        return `Unknown entity_type "${entity_type}". Must be one of: hero, ability, item.`;
+        return { text: `Unknown entity_type "${entity_type}". Must be one of: hero, ability, item.` };
     }
   } catch (err) {
-    return `Lookup failed due to an error: ${err instanceof Error ? err.message : String(err)}`;
+    return { text: `Lookup failed due to an error: ${err instanceof Error ? err.message : String(err)}` };
   }
 }

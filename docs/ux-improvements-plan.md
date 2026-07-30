@@ -213,6 +213,8 @@ Once all required steps here are done, resume `docs/plan.md` at its Step 3 (Open
 
 **Known follow-up (not yet fixed)**: tables render squished/cramped on mobile viewport widths — noted during Step 9 verification, revisit later (likely needs a horizontal-scroll wrapper or responsive table styling in `ChatMessage.tsx`'s `prose-chat` markdown rendering).
 
+**Superseded 2026-07-31**: this step's "have Claude write a markdown table with `![](iconUrl)` inline" mechanism was replaced — recurring malformed-table bugs (GFM cells breaking on multi-sentence/multi-stat content) turned out to be structurally unfixable via prompt wording alone. Claude no longer authors table markdown or icon markdown for tool-grounded data at all; the backend now formats `lookup_dota_entity`/`lookup_hero_kit` results into typed `ContentBlock`s (icon included) and Claude just marks where each one goes with a `[[block:N]]` placeholder. See `docs/progress-log.md`'s 2026-07-31 entry for the full history, including a failed first attempt at the placeholder mechanism itself. This step's "done looks like" goals (icons render inline, tables render cleanly) still hold — the mechanism just changed. The mobile-squish follow-up above wasn't retested against the new components and likely still applies (same underlying `.prose-chat table` CSS).
+
 ---
 
 ## ✅ Step 10 — Abuse/cost protection *(Avenue B: Upstash Redis rate limiter)*

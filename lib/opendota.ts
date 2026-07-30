@@ -11,20 +11,43 @@ export interface HeroConstant {
   roles: string[];
   icon?: string;
   iconUrl?: string;
+  base_health?: number;
+  base_mana?: number;
+  base_armor?: number;
+  base_attack_min?: number;
+  base_attack_max?: number;
+  base_str?: number;
+  base_agi?: number;
+  base_int?: number;
+  attack_range?: number;
+  move_speed?: number;
   [key: string]: unknown;
+}
+
+export interface AbilityAttrib {
+  key: string;
+  header?: string;
+  value: string | string[];
+  generated?: boolean;
 }
 
 export interface AbilityConstant {
   dname?: string;
   behavior?: string | string[];
-  dmg?: string;
-  cooldown?: string;
-  mc?: string;
   lore?: string;
   desc?: string;
   img?: string;
   iconUrl?: string;
+  mc?: string | string[] | false;
+  cd?: string | string[] | false;
+  attrib?: AbilityAttrib[];
   [key: string]: unknown;
+}
+
+export interface ItemAbility {
+  type?: string;
+  title?: string;
+  description?: string;
 }
 
 export interface ItemConstant {
@@ -34,6 +57,11 @@ export interface ItemConstant {
   qual?: string;
   desc?: string;
   notes?: string;
+  hint?: string[];
+  abilities?: ItemAbility[];
+  mc?: number | false;
+  cd?: number | false;
+  attrib?: AbilityAttrib[];
   img?: string;
   iconUrl?: string;
   [key: string]: unknown;
@@ -146,7 +174,7 @@ export async function findItemByName(name: string): Promise<ItemConstant | null>
 
 // Strips OpenDota's unresolved value-template syntax (e.g. "{s:bonus_stack_bonus_damage}") —
 // neither the live API nor dotaconstants resolves these to their actual numbers.
-function stripValueTemplate(dname: string): string {
+export function stripValueTemplate(dname: string): string {
   return dname.replace(/\s*\{[^}]*\}\s*/g, " ").replace(/\s+/g, " ").trim();
 }
 

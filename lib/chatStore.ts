@@ -1,6 +1,6 @@
 import type { Message } from "@/lib/types";
 
-const STORAGE_KEY = "dota-watchbuddy:chats";
+const STORAGE_KEY = "dota-watchbuddy:chats:v2";
 
 export interface StoredChat {
   id: string;

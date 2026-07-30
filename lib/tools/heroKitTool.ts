@@ -1,5 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { getHeroAghs, getHeroFacets, getHeroTalents } from "@/lib/opendota";
+import { aghsToBlock, facetsToBlock, talentsToBlock } from "@/lib/tools/blockFormatters";
+import type { ToolExecutionResult } from "@/lib/types";
 
 export const heroKitTool: Anthropic.Tool = {
   name: "lookup_hero_kit",
@@ -27,29 +29,30 @@ interface HeroKitToolInput {
   hero_name: string;
 }
 
-export async function executeHeroKitTool(input: HeroKitToolInput): Promise<string> {
+export async function executeHeroKitTool(input: HeroKitToolInput): Promise<ToolExecutionResult> {
   const { kit_type, hero_name } = input;
 
   try {
     switch (kit_type) {
       case "talents": {
         const talents = await getHeroTalents(hero_name);
-        return talents ? JSON.stringify(talents) : `No hero found matching "${hero_name}".`;
+        if (!talents) return { text: `No hero found matching "${hero_name}".` };
+        return { text: JSON.stringify(talents), block: talentsToBlock(talents) };
       }
       case "facets": {
         const facets = await getHeroFacets(hero_name);
-        return facets ? JSON.stringify(facets) : `No hero found matching "${hero_name}".`;
+        if (!facets) return { text: `No hero found matching "${hero_name}".` };
+        return { text: JSON.stringify(facets), block: facetsToBlock(facets) };
       }
       case "aghanim": {
         const aghs = await getHeroAghs(hero_name);
-        return aghs
-          ? JSON.stringify(aghs)
-          : `No Aghanim's Scepter/Shard data found for "${hero_name}".`;
+        if (!aghs) return { text: `No Aghanim's Scepter/Shard data found for "${hero_name}".` };
+        return { text: JSON.stringify(aghs), block: aghsToBlock(aghs) };
       }
       default:
-        return `Unknown kit_type "${kit_type}". Must be one of: talents, facets, aghanim.`;
+        return { text: `Unknown kit_type "${kit_type}". Must be one of: talents, facets, aghanim.` };
     }
   } catch (err) {
-    return `Lookup failed due to an error: ${err instanceof Error ? err.message : String(err)}`;
+    return { text: `Lookup failed due to an error: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
