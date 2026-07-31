@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { AbilityEntry } from "@/lib/types";
 
 export default function AbilityList({ title, entries }: { title?: string; entries: AbilityEntry[] }) {
@@ -7,7 +8,9 @@ export default function AbilityList({ title, entries }: { title?: string; entrie
       {entries.map((entry, i) => (
         <div key={i}>
           <div className="mb-1 flex items-center gap-2 font-semibold">
-            {entry.iconUrl && <img src={entry.iconUrl} alt="" className="h-8 w-8 rounded object-contain" />}
+            {entry.iconUrl && (
+              <Image src={entry.iconUrl} alt="" width={32} height={32} className="h-8 w-8 rounded object-contain" />
+            )}
             <span>{entry.name}</span>
           </div>
           {entry.description && <p className="mb-2 whitespace-pre-wrap">{entry.description}</p>}

@@ -31,7 +31,7 @@ interface ChatRequestMessage {
   content: string;
 }
 
-const MAX_TOOL_ITERATIONS = 5;
+const MAX_TOOL_ITERATIONS = 10;
 
 function toolStatusText(block: Anthropic.ToolUseBlock): string {
   if (block.name === "lookup_dota_entity") {
@@ -81,12 +81,13 @@ export async function POST(req: NextRequest) {
       try {
         let containerId: string | undefined;
 
-        const createMessage = async () => {
+        const createMessage = async (forceFinalAnswer = false) => {
           const anthropicStream = anthropic.messages.stream({
             model: CLAUDE_MODEL,
             max_tokens: 2048,
             system: SYSTEM_PROMPT,
             tools: [lookupTool, heroKitTool, webSearchTool, codeExecutionTool],
+            tool_choice: forceFinalAnswer ? { type: "none" } : undefined,
             messages,
             container: containerId,
           });
@@ -151,7 +152,7 @@ export async function POST(req: NextRequest) {
           if (toolResults.length > 0) {
             messages.push({ role: "user", content: toolResults });
           }
-          response = await createMessage();
+          response = await createMessage(iterations >= MAX_TOOL_ITERATIONS);
         }
         allContent.push(...response.content);
 

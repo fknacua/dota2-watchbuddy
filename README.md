@@ -16,7 +16,7 @@ See [project.md](project.md) for the full build brief.
 ## Tech stack
 
 - **Framework**: Next.js 15 (App Router), React 19
-- **Model**: Claude (Anthropic API) via tool use
+- **Model**: Claude (Anthropic API) via tool use — Claude Sonnet 5 for chat, Claude Haiku 4.5 for chat title generation
 - **Data grounding**: OpenDota public API (no key required)
 - **Rate limiting**: Upstash Redis
 - **Styling**: Tailwind CSS, Radix UI

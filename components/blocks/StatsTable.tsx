@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { StatRow } from "@/lib/types";
 
 export default function StatsTable({
@@ -15,7 +16,9 @@ export default function StatsTable({
     <div className="my-2">
       {title && (
         <div className="mb-1 flex items-center gap-2 font-semibold">
-          {iconUrl && <img src={iconUrl} alt="" className="h-8 w-8 rounded object-contain" />}
+          {iconUrl && (
+            <Image src={iconUrl} alt="" width={32} height={32} className="h-8 w-8 rounded object-contain" />
+          )}
           <span>{title}</span>
         </div>
       )}

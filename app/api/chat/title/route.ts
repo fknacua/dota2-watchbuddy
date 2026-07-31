@@ -6,11 +6,8 @@ export async function POST(req: NextRequest) {
   const userMessage: string = body?.userMessage ?? "";
   const assistantReply: string = body?.assistantReply ?? "";
 
-  if (!userMessage || !assistantReply) {
-    return NextResponse.json(
-      { error: "userMessage and assistantReply are required" },
-      { status: 400 }
-    );
+  if (!userMessage) {
+    return NextResponse.json({ error: "userMessage is required" }, { status: 400 });
   }
 
   try {
